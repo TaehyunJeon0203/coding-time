@@ -1,18 +1,24 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 
+let mainWindow: BrowserWindow | null = null;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  console.log("Creating window...");
+
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: true,
-      contextIsolation: false,
     },
   });
 
-  win.loadURL("http://localhost:3000");
+  mainWindow.loadFile(path.join(__dirname, "index.html"));
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
 app.on("ready", createWindow);
@@ -24,7 +30,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (mainWindow === null) {
     createWindow();
   }
 });
