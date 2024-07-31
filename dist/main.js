@@ -25,14 +25,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
-let mainWindow = null;
+let mainWindow;
 function createWindow() {
-    console.log("Creating window...");
     mainWindow = new electron_1.BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
+            nodeIntegration: true,
+            contextIsolation: false,
         },
     });
     mainWindow.loadFile(path.join(__dirname, "index.html"));

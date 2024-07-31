@@ -1,16 +1,15 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null;
 
-function createWindow() {
-  console.log("Creating window...");
-
+function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: true,
+      contextIsolation: false,
     },
   });
 
