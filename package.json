@@ -4,7 +4,9 @@
   "main": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ./",
+    "build:css": "npx tailwindcss -o src/styles/tailwind.css",
+    "watch:css": "npx tailwindcss -o src/styles/tailwind.css --watch",
+    "start": "npm run build:css && electron .",
     "build": "tsc && cp src/index.html dist/"
   },
   "keywords": [],
@@ -14,7 +16,11 @@
   "devDependencies": {
     "@types/electron": "^1.6.10",
     "@types/node": "^22.0.0",
+    "autoprefixer": "^10.4.19",
     "electron": "^31.3.1",
+    "postcss": "^8.4.40",
+    "postcss-loader": "^8.1.1",
+    "tailwindcss": "^3.4.7",
     "typescript": "^5.5.4"
   }
 }
