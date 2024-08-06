@@ -1,33 +1,48 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const electron_1 = require("electron");
-const path = __importStar(require("path"));
+import { app, BrowserWindow } from "electron";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { exec } from "child_process";
+import fs from "fs";
+import * as path from "path";
 let mainWindow;
+let intervalId;
+const TIMER_FILE_PATH = path.join(app.getPath("userData"), "timer.json");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+function isVSCodeRunning() {
+    return new Promise((resolve, reject) => {
+        exec("ps aux | grep 'Visual Studio Code' | grep -v grep", (err, stdout, stderr) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(stdout.length > 0);
+        });
+    });
+}
+function saveTimerState(state) {
+    fs.writeFileSync(TIMER_FILE_PATH, JSON.stringify(state));
+}
+function loadTimerState() {
+    if (fs.existsSync(TIMER_FILE_PATH)) {
+        return JSON.parse(fs.readFileSync(TIMER_FILE_PATH, "utf-8"));
+    }
+    return { seconds: 0 };
+}
+let timerState = loadTimerState();
+function startTimer() {
+    intervalId = setInterval(async () => {
+        const vscodeRunning = await isVSCodeRunning();
+        if (vscodeRunning) {
+            timerState.seconds++;
+            saveTimerState(timerState);
+            if (mainWindow) {
+                mainWindow.webContents.send("update-timer", timerState.seconds);
+            }
+        }
+    }, 1000);
+}
 function createWindow() {
-    mainWindow = new electron_1.BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
@@ -40,13 +55,13 @@ function createWindow() {
         mainWindow = null;
     });
 }
-electron_1.app.on("ready", createWindow);
-electron_1.app.on("window-all-closed", () => {
+app.on("ready", createWindow);
+app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
-        electron_1.app.quit();
+        app.quit();
     }
 });
-electron_1.app.on("activate", () => {
+app.on("activate", () => {
     if (mainWindow === null) {
         createWindow();
     }

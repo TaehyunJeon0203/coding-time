@@ -2,6 +2,7 @@
   "name": "coding-time",
   "version": "1.0.0",
   "main": "dist/main.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "npx tailwindcss -o src/styles/tailwind.css",

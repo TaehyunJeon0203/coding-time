@@ -1,4 +1,6 @@
 import { app, BrowserWindow } from "electron";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import { exec } from "child_process";
 import fs from "fs";
 import * as path from "path";
@@ -6,6 +8,9 @@ import * as path from "path";
 let mainWindow: BrowserWindow | null;
 let intervalId: NodeJS.Timeout;
 const TIMER_FILE_PATH = path.join(app.getPath("userData"), "timer.json");
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface TimerState {
   seconds: number;
