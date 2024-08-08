@@ -56,6 +56,10 @@ function startTimer() {
   }, 1000);
 }
 
+function stopTimer() {
+  clearInterval(intervalId);
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -71,11 +75,14 @@ function createWindow(): void {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+
+  startTimer();
 }
 
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
+  stopTimer();
   if (process.platform !== "darwin") {
     app.quit();
   }
@@ -85,4 +92,8 @@ app.on("activate", () => {
   if (mainWindow === null) {
     createWindow();
   }
+});
+
+app.on("before-quit", () => {
+  saveTimerState(timerState);
 });

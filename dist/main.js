@@ -32,6 +32,7 @@ let timerState = loadTimerState();
 function startTimer() {
     intervalId = setInterval(async () => {
         const vscodeRunning = await isVSCodeRunning();
+        console.log("dodododo");
         if (vscodeRunning) {
             timerState.seconds++;
             saveTimerState(timerState);
@@ -40,6 +41,9 @@ function startTimer() {
             }
         }
     }, 1000);
+}
+function stopTimer() {
+    clearInterval(intervalId);
 }
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -54,9 +58,11 @@ function createWindow() {
     mainWindow.on("closed", () => {
         mainWindow = null;
     });
+    startTimer();
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", () => {
+    stopTimer();
     if (process.platform !== "darwin") {
         app.quit();
     }
@@ -65,4 +71,7 @@ app.on("activate", () => {
     if (mainWindow === null) {
         createWindow();
     }
+});
+app.on("before-quit", () => {
+    saveTimerState(timerState);
 });
