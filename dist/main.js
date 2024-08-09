@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { join } from "path";
 import { exec } from "child_process";
 import fs from "fs";
 import * as path from "path";
@@ -8,7 +8,7 @@ let mainWindow;
 let intervalId;
 const TIMER_FILE_PATH = path.join(app.getPath("userData"), "timer.json");
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = join(__filename, "..");
 function isVSCodeRunning() {
     return new Promise((resolve, reject) => {
         exec("ps aux | grep 'Visual Studio Code' | grep -v grep", (err, stdout, stderr) => {
@@ -24,15 +24,26 @@ function saveTimerState(state) {
 }
 function loadTimerState() {
     if (fs.existsSync(TIMER_FILE_PATH)) {
-        return JSON.parse(fs.readFileSync(TIMER_FILE_PATH, "utf-8"));
+        const fileContent = fs.readFileSync(TIMER_FILE_PATH, "utf-8");
+        if (fileContent.trim() === "") {
+            // 파일이 비어 있으면 기본 값을 반환
+            console.log("Timer JSON file is empty, returning default state.");
+            return { seconds: 0 };
+        }
+        try {
+            return JSON.parse(fileContent);
+        }
+        catch (error) {
+            console.error("Error parsing JSON:", error);
+            return { seconds: 0 }; // 기본 값 반환
+        }
     }
-    return { seconds: 0 };
+    return { seconds: 0 }; // 파일이 없을 경우 기본 값 반환
 }
 let timerState = loadTimerState();
 function startTimer() {
     intervalId = setInterval(async () => {
         const vscodeRunning = await isVSCodeRunning();
-        console.log("dodododo");
         if (vscodeRunning) {
             timerState.seconds++;
             saveTimerState(timerState);
@@ -54,6 +65,7 @@ function createWindow() {
             contextIsolation: false,
         },
     });
+    console.log("Timer file path:", TIMER_FILE_PATH);
     mainWindow.loadFile(path.join(__dirname, "index.html"));
     mainWindow.on("closed", () => {
         mainWindow = null;

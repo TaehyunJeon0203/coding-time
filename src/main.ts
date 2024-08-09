@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { join } from "path";
 import { exec } from "child_process";
 import fs from "fs";
 import * as path from "path";
@@ -10,7 +10,7 @@ let intervalId: NodeJS.Timeout;
 const TIMER_FILE_PATH = path.join(app.getPath("userData"), "timer.json");
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = join(__filename, "..");
 
 interface TimerState {
   seconds: number;
@@ -34,12 +34,26 @@ function saveTimerState(state: TimerState) {
   fs.writeFileSync(TIMER_FILE_PATH, JSON.stringify(state));
 }
 
-function loadTimerState(): TimerState {
+function loadTimerState() {
   if (fs.existsSync(TIMER_FILE_PATH)) {
-    return JSON.parse(fs.readFileSync(TIMER_FILE_PATH, "utf-8"));
+    const fileContent = fs.readFileSync(TIMER_FILE_PATH, "utf-8");
+
+    if (fileContent.trim() === "") {
+      // 파일이 비어 있으면 기본 값을 반환
+      console.log("Timer JSON file is empty, returning default state.");
+      return { seconds: 0 };
+    }
+
+    try {
+      return JSON.parse(fileContent);
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      return { seconds: 0 }; // 기본 값 반환
+    }
   }
-  return { seconds: 0 };
+  return { seconds: 0 }; // 파일이 없을 경우 기본 값 반환
 }
+
 let timerState = loadTimerState();
 
 function startTimer() {
@@ -69,6 +83,7 @@ function createWindow(): void {
       contextIsolation: false,
     },
   });
+  console.log("Timer file path:", TIMER_FILE_PATH);
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
