@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { join } from "path";
 import { exec } from "child_process";
@@ -9,6 +10,40 @@ let intervalId;
 const TIMER_FILE_PATH = path.join(app.getPath("userData"), "timer.json");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, "..");
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+    });
+    mainWindow.loadFile(path.join(__dirname, "index.html"));
+    mainWindow.on("closed", () => {
+        mainWindow = null;
+    });
+    startTimer();
+    ipcMain.on("launch-project", (event, projectPath) => {
+        console.log(`Opening project at: ${projectPath}`);
+        spawn("code", [projectPath], { shell: true });
+    });
+}
+app.on("ready", createWindow);
+app.on("window-all-closed", () => {
+    stopTimer();
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
+});
+app.on("activate", () => {
+    if (mainWindow === null) {
+        createWindow();
+    }
+});
+app.on("before-quit", () => {
+    saveTimerState(timerState);
+});
 function isVSCodeRunning() {
     return new Promise((resolve, reject) => {
         exec("ps aux | grep 'Visual Studio Code' | grep -v grep", (err, stdout, stderr) => {
@@ -56,34 +91,3 @@ function startTimer() {
 function stopTimer() {
     clearInterval(intervalId);
 }
-function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-        },
-    });
-    console.log("Timer file path:", TIMER_FILE_PATH);
-    mainWindow.loadFile(path.join(__dirname, "index.html"));
-    mainWindow.on("closed", () => {
-        mainWindow = null;
-    });
-    startTimer();
-}
-app.on("ready", createWindow);
-app.on("window-all-closed", () => {
-    stopTimer();
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
-});
-app.on("activate", () => {
-    if (mainWindow === null) {
-        createWindow();
-    }
-});
-app.on("before-quit", () => {
-    saveTimerState(timerState);
-});
